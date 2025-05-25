@@ -130,6 +130,9 @@ async function startDiscussion() {
     startDiscussionButton.disabled = true;
     stopDiscussionButton.classList.remove('hidden');
     
+    // Reset worker cache to prevent contamination
+    worker.postMessage({ type: 'reset' });
+    
     // Start the conversation
     generateNextResponse();
 }
@@ -145,16 +148,16 @@ async function generateNextResponse() {
     const otherSpeaker = currentSpeaker === 'alex' ? 'taylor' : 'alex';
     
     // Build conversation context
-    let conversationContext = `${persona.systemPrompt}\n\nTopic: ${currentTopic}\n\n`;
+    let conversationContext = '';
     
     if (discussionHistory.length === 0) {
-        conversationContext += `You are starting a discussion about "${currentTopic}". Provide your initial thoughts on this topic.`;
+        conversationContext = `Topic: ${currentTopic}\n\nAs ${persona.name}, provide your initial thoughts on this topic.`;
     } else {
-        conversationContext += "Previous discussion:\n";
+        conversationContext = `Topic: ${currentTopic}\n\nPrevious discussion:\n`;
         discussionHistory.forEach(entry => {
             conversationContext += `${personas[entry.speaker].name}: ${entry.content}\n`;
         });
-        conversationContext += `\nNow respond to the discussion as ${persona.name}. Build on what was said and add your perspective.`;
+        conversationContext += `\nNow respond as ${persona.name}. Build on what was said and add your perspective.`;
     }
 
     const messages = [
@@ -315,7 +318,7 @@ worker.addEventListener('message', (e) => {
                 // Switch speaker for next turn
                 currentSpeaker = currentSpeaker === 'alex' ? 'taylor' : 'alex';
                 
-                // Continue discussion after a short delay
+                // Continue discussion after a 2-second delay
                 setTimeout(() => {
                     if (discussionActive && turnCount < MAX_TURNS) {
                         generateNextResponse();

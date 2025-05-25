@@ -100,12 +100,23 @@ async function generate(messages, speaker = null) {
   };
 
   const callback_function = (output) => {
-    // Send each token to the main thread
-    self.postMessage({
-      status: "token",
-      output: output,
-      speaker: speaker
-    });
+    // Filter out any chat template artifacts during streaming
+    if (output && 
+        !output.toLowerCase().includes('assistant') &&
+        !output.includes('You are Alex') && 
+        !output.includes('You are Taylor') &&
+        !output.includes('system') &&
+        !output.includes('user') &&
+        !output.includes('<|') &&
+        !output.includes('|>') &&
+        output.trim().length > 0) {
+      // Send each token to the main thread
+      self.postMessage({
+        status: "token",
+        output: output,
+        speaker: speaker
+      });
+    }
   };
 
   const streamer = new TextStreamer(tokenizer, {
@@ -139,7 +150,52 @@ async function generate(messages, speaker = null) {
   });
 
   // Clean up the final output to get just the assistant's response
-  const finalOutput = decoded[0].split('assistant\n').pop()?.trim() || decoded[0];
+  let finalOutput = decoded[0];
+  
+  // Remove the original prompt by finding the last occurrence of common chat template patterns
+  const patterns = [
+    'assistant\n',
+    'Assistant:',
+    'assistant:',
+    '<|assistant|>',
+    '</s>assistant\n',
+    'assistant',
+    '<|im_start|>assistant',
+    '<|im_end|>'
+  ];
+  
+  for (const pattern of patterns) {
+    if (finalOutput.includes(pattern)) {
+      const parts = finalOutput.split(pattern);
+      if (parts.length > 1) {
+        finalOutput = parts[parts.length - 1];
+        break;
+      }
+    }
+  }
+  
+  // Additional cleanup: remove any remaining template artifacts
+  finalOutput = finalOutput
+    .replace(/assistant\n?/gi, '')
+    .replace(/Assistant:?\n?/gi, '')
+    .replace(/<\|.*?\|>/g, '')
+    .replace(/system\n?/gi, '')
+    .replace(/user\n?/gi, '')
+    .replace(/You are (Alex|Taylor)[^\n]*/gi, '');
+  
+  // Remove any remaining system prompt leakage and clean up lines
+  const lines = finalOutput.split('\n');
+  finalOutput = lines.filter(line => {
+    const cleanLine = line.trim().toLowerCase();
+    return cleanLine.length > 0 && 
+           !cleanLine.includes('you are alex') && 
+           !cleanLine.includes('you are taylor') &&
+           !cleanLine.includes('assistant') &&
+           !cleanLine.includes('system') &&
+           !cleanLine.includes('user');
+  }).join('\n');
+  
+  finalOutput = finalOutput.trim();
 
   // Send the complete output
   self.postMessage({

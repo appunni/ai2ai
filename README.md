@@ -7,7 +7,7 @@ Watch as "Alex the Optimist" and "Taylor the Realist" bring different perspectiv
 The project demonstrates advanced browser-based LLM integration with features like real-time response streaming, persona-based conversations, and intelligent turn-taking between AI participants. Created by 'vibe coding' with assistance from GitHub Copilot and Cline.
 
 ## Demo
-Try out the live demo at [https://appunni.github.io/local-chat/](https://appunni.github.io/local-chat/)
+Try out the live demo at [https://appunni.github.io/ai2ai/](https://appunni.github.io/ai2ai/)
 
 ## Features
 - **AI Personas**: Two distinct personalities - Alex (optimistic) and Taylor (realistic)
@@ -25,8 +25,8 @@ Try out the live demo at [https://appunni.github.io/local-chat/](https://appunni
 ## Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone https://github.com/appunni/local-chat.git
-   cd local-chat
+   git clone https://github.com/appunni/ai2ai.git
+   cd ai2ai
    ```
 
 2. Start a local server (e.g., using Python):
